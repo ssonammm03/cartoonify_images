@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartoonified Result</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      max-width: 900px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .image-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    img {
+      border-radius: 10px;
+      width: 350px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 25px;
+      text-decoration: none;
+      background-color: #6b7cff;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      transition: 0.3s;
+    }
+
+    a:hover {
+      background-color: #4f5bcc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>✨ Cartoonified Result</h2>
+
+    <div class="image-row">
+      <div>
+        <h3>Original Image</h3>
+        <img src="{{ uploaded_image }}" alt="Original" />
+      </div>
+      <div>
+        <h3>Cartoonified Image</h3>
+        <img src="{{ cartoonified_image }}" alt="Cartoonified" />
+      </div>
+    </div>
+
+    <a href="/">⬅ Try another image</a>
+  </div>
+</body>
+</html>

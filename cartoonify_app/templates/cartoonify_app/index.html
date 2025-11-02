@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartoonify Me 🎨</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+      text-align: center;
+      width: 450px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 15px auto;
+      padding: 10px;
+      border: 2px dashed #6b7cff;
+      border-radius: 10px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    button {
+      background-color: #6b7cff;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #4f5bcc;
+    }
+
+    video, canvas, img {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    #result {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>🎨 Cartoonify Me</h2>
+
+    <!-- Upload Section -->
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" required />
+      <button type="submit">Upload & Cartoonify</button>
+    </form>
+
+    <!-- Webcam Section -->
+    <div id="cameraSection" class="hidden">
+      <video id="webcam" autoplay></video>
+      <canvas id="snapshot" class="hidden"></canvas>
+      <button id="capture">📸 Capture</button>
+      <button id="cartoonifyCam" class="hidden">Cartoonify</button>
+    </div>
+
+    <!-- Toggle Mode -->
+    <div>
+      <button id="toggleMode">Switch to Camera Mode 📷</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const uploadForm = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+    const toggleModeBtn = document.getElementById('toggleMode');
+    const cameraSection = document.getElementById('cameraSection');
+    const webcam = document.getElementById('webcam');
+    const captureBtn = document.getElementById('capture');
+    const cartoonifyCamBtn = document.getElementById('cartoonifyCam');
+    const canvas = document.getElementById('snapshot');
+    const ctx = canvas.getContext('2d');
+    let cameraActive = false;
+    let capturedImage = null;
+
+    // --- Toggle between Upload and Camera ---
+    toggleModeBtn.addEventListener('click', () => {
+      if (!cameraActive) {
+        uploadForm.classList.add('hidden');
+        cameraSection.classList.remove('hidden');
+        toggleModeBtn.innerText = "Switch to Upload Mode 📁";
+        startCamera();
+      } else {
+        stopCamera();
+        uploadForm.classList.remove('hidden');
+        cameraSection.classList.add('hidden');
+        toggleModeBtn.innerText = "Switch to Camera Mode 📷";
+      }
+      cameraActive = !cameraActive;
+    });
+
+    // --- Start webcam ---
+    async function startCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      webcam.srcObject = stream;
+    }
+
+    // --- Stop webcam ---
+    function stopCamera() {
+      const stream = webcam.srcObject;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    // --- Capture frame from video ---
+    captureBtn.addEventListener('click', () => {
+      canvas.width = webcam.videoWidth;
+      canvas.height = webcam.videoHeight;
+      ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+      canvas.classList.remove('hidden');
+      cartoonifyCamBtn.classList.remove('hidden');
+
+      // Convert to Blob
+      canvas.toBlob(blob => {
+        capturedImage = new File([blob], "webcam.jpg", { type: "image/jpeg" });
+      }, "image/jpeg");
+    });
+
+    // --- Send webcam image to Django ---
+    cartoonifyCamBtn.addEventListener('click', async () => {
+      if (!capturedImage) return alert("Please capture an image first!");
+
+      const formData = new FormData();
+      formData.append('image', capturedImage);
+
+      resultDiv.innerHTML = "<p>⏳ Processing...</p>";
+
+      const response = await fetch('/upload/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        resultDiv.innerHTML = `<h3>🖼️ Cartoonified Result</h3><img src="data:image/jpeg;base64,${data.cartoon_image}" />`;
+      } else {
+        resultDiv.innerHTML = "<p>❌ Something went wrong!</p>";
+      }
+    });
+
+    // --- Handle file upload ---
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(uploadForm);
+      resultDiv.innerHTML = "<p>⏳ Processing...</p>";
+
+      const response = await fetch('/upload/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        resultDiv.innerHTML = `<h3>🖼️ Cartoonified Result</h3><img src="data:image/jpeg;base64,${data.cartoon_image}" />`;
+      } else {
+        resultDiv.innerHTML = "<p>❌ Something went wrong!</p>";
+      }
+    });
+  </script>
+</body>
+</html>
